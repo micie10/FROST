@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LOVE</title>
-<meta property="og:title" content="LOVE">
+<title>FROST X CIEL</title>
+<meta property="og:title" content="FROST X CIEL">
 <meta property="og:description" content="선택해서 바보들(♡)을 구경해요!">
 <meta property="og:image" content="https://i.imgur.com/zInpHhL.jpeg">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="LOVE">
+<meta name="twitter:title" content="FROST X CIEL">
 <meta name="twitter:description" content="선택해서 바보들(♡)을 구경해요!">
 <meta name="twitter:image" content="https://i.imgur.com/zInpHhL.jpeg">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🫧</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <style>
 :root {
@@ -1476,7 +1476,7 @@ document.addEventListener('selectstart', e => {
           contenteditable="false"
           onblur="saveSidebarMeta()"
           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
-          style="outline:none;cursor:default;"> LOVE </div>
+          style="outline:none;cursor:default;"> FROST X CIEL </div>
       </div>
     </div>
 
@@ -1624,7 +1624,7 @@ document.addEventListener('selectstart', e => {
 
       <!-- ── 이미지 사이드패널 ── -->
       <div class="arc-img-panel" id="arcImgPanel">
-        <div class="arc-img-panel-label"> LOVE </div>
+        <div class="arc-img-panel-label"> FROST X CIEL </div>
         <div id="arcImgSlots"></div>
         <button class="arc-img-panel-add" onclick="arcImgAddSlot()">＋ 이미지 추가</button>
       </div>
@@ -2218,6 +2218,7 @@ let currentStoryLineIdx = 0;
 let editingStoryIdx = -1;
 let currentTab = 'all';
 let currentType = 'log';
+let forcedAddType = null; // GALLERY(+이미지 추가)로 열었을 때만 채워지는 강제 타입 — 저장 시 currentType보다 우선함
 let editingItemId = null;
 let tempItemImg = null;
 let pendingPins = [];
@@ -3296,11 +3297,13 @@ function cardHTML(it) {
 function openGalleryAddModal() {
   openAddModal();
   currentType = 'photogallery';
+  forcedAddType = 'photogallery';
   document.querySelectorAll('#typeChips .type-chip').forEach(c=>c.classList.toggle('on', c.dataset.v==='photogallery'));
   document.getElementById('typeFieldWrap').style.display = 'none';
 }
 function openAddModal() {
   if (!requireAdmin()) return;
+  forcedAddType = null;
   editingItemId = null; tempItemImg = null;
   document.getElementById('addModalTtl').textContent = '새 항목 추가';
   document.getElementById('addModalSaveBtn').textContent = '저장';
@@ -3324,6 +3327,7 @@ function openAddModal() {
 function openEditItemModal(id) {
   if (!requireAdmin()) return;
   const it=currentItems.find(i=>i.id===id); if(!it) return;
+  forcedAddType = null;
   editingItemId = id; tempItemImg = it.img || null;
   document.getElementById('addModalTtl').textContent = '항목 수정';
   document.getElementById('addModalSaveBtn').textContent = '수정 완료';
@@ -3354,6 +3358,7 @@ function openEditItemModal(id) {
 }
 function pickType(btn) {
   currentType=btn.dataset.v;
+  forcedAddType = null;
   document.querySelectorAll('.type-chip').forEach(c=>c.classList.remove('on'));
   btn.classList.add('on');
   document.getElementById('imgUrlWrap').style.display = (!document.getElementById('inp-ishtml').checked)?'block':'none';
@@ -3586,13 +3591,15 @@ async function saveItem() {
   const img = !isHtml ? (tempItemImg||'') : '';
   const isSecret = document.getElementById('inp-issecret')?.checked || false;
   const secretPw = isSecret ? (document.getElementById('inp-secret-pw')?.value.trim() || '') : '';
+  const saveType = forcedAddType || currentType;
   if (editingItemId !== null) {
     const it = currentItems.find(i=>i.id===editingItemId);
-    if (it) { it.type=currentType; it.title=title; it.body=body; it.isHtml=isHtml||isRichHtml(body); it.img=img; it.secret=isSecret; it.secretPw=secretPw; }
+    if (it) { it.type=saveType; it.title=title; it.body=body; it.isHtml=isHtml||isRichHtml(body); it.img=img; it.secret=isSecret; it.secretPw=secretPw; }
     editingItemId = null;
   } else {
-    currentItems.unshift({id:Date.now(),type:currentType,title,body,isHtml:isHtml||isRichHtml(body),img,date:new Date().toISOString().slice(0,10),secret:isSecret,secretPw});
+    currentItems.unshift({id:Date.now(),type:saveType,title,body,isHtml:isHtml||isRichHtml(body),img,date:new Date().toISOString().slice(0,10),secret:isSecret,secretPw});
   }
+  forcedAddType = null;
   await saveCurrentPair(); showToast('저장됨 ✓'); closeModal('addModal'); renderGrid(); renderHome(); renderGallery();
 }
 
